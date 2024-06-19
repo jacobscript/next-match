@@ -2,7 +2,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { FaMale, FaFemale } from 'react-icons/fa'
 import useFilterStore from './useFilterStore'
-import { useEffect, useTransition } from 'react'
+import { ChangeEvent, useEffect, useTransition } from 'react'
 import { Selection } from '@nextui-org/react'
 import usePaginationStore from './usePaginationStore'
 
@@ -10,26 +10,29 @@ export const useFilters = () => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [isPending, startTransituin] = useTransition()
+  const [isPending, startTransition] = useTransition()
 
   const { filters, setFilters } = useFilterStore()
 
-  const { pageNumber, pageSize, setPage } = usePaginationStore((state) => ({
-    pageNumber: state.pagination.pageNumber,
-    pageSize: state.pagination.pageSize,
-    setPage: state.setPage,
-  }))
+  const { pageNumber, pageSize, setPage, totalCount } = usePaginationStore(
+    (state) => ({
+      pageNumber: state.pagination.pageNumber,
+      pageSize: state.pagination.pageSize,
+      setPage: state.setPage,
+      totalCount: state.pagination.totalCount,
+    })
+  )
 
-  const { gender, ageRange, orderBy } = filters
+  const { gender, ageRange, orderBy, withPhoto } = filters
 
   useEffect(() => {
-    if (gender || ageRange || orderBy) {
+    if (gender || ageRange || orderBy || withPhoto) {
       setPage(1)
     }
-  }, [setPage, gender, ageRange, orderBy])
+  }, [setPage, gender, ageRange, orderBy, withPhoto])
 
   useEffect(() => {
-    startTransituin(() => {
+    startTransition(() => {
       const searchParams = new URLSearchParams()
 
       if (gender) searchParams.set('gender', gender.join(','))
@@ -37,10 +40,20 @@ export const useFilters = () => {
       if (orderBy) searchParams.set('orderBy', orderBy)
       if (pageSize) searchParams.set('pageSize', pageSize.toString())
       if (pageNumber) searchParams.set('pageNumber', pageNumber.toString())
+      searchParams.set('withPhoto', withPhoto.toString())
 
       router.replace(`${pathname}?${searchParams}`)
     })
-  }, [ageRange, orderBy, gender, router, pathname, pageNumber, pageSize])
+  }, [
+    ageRange,
+    orderBy,
+    gender,
+    router,
+    pathname,
+    pageNumber,
+    pageSize,
+    withPhoto,
+  ])
 
   const orderByList = [
     { label: 'Last active', value: 'updated' },
@@ -71,13 +84,19 @@ export const useFilters = () => {
     else setFilters('gender', [...gender, value])
   }
 
+  const handleWithPhotoToggle = (e: ChangeEvent<HTMLInputElement>) => {
+    setFilters('withPhoto', e.target.checked)
+  }
+
   return {
     orderByList,
     genderList,
     selectAge: handleAgeSelect,
     selectGender: handleGenderSelect,
     selectOrder: handleOrderSelect,
+    selectWithPhoto: handleWithPhotoToggle,
     filters,
     isPending,
+    totalCount,
   }
 }

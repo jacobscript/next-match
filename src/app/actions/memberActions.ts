@@ -13,6 +13,7 @@ export async function getMembers({
   orderBy = 'updated',
   pageNumber = '1',
   pageSize = '12',
+  withPhoto = 'true',
 }: GetMemberParams): Promise<PaginatedResponse<Member>> {
   const userId = await getAuthUserId()
 
@@ -28,6 +29,16 @@ export async function getMembers({
 
   const skip = (page - 1) * limit
 
+  // let conditions = [
+  //   { dateOfBirth: { gte: minDob } },
+  //   { dateOfBirth: { lte: maxDob } },
+  //   { gender: { in: selectedGender } },
+  // ]
+
+  // if (withPhoto === 'true') {
+  //   conditions.push({ image: { not: null } })
+  // }
+
   try {
     const count = await prisma.member.count({
       where: {
@@ -35,6 +46,7 @@ export async function getMembers({
           { dateOfBirth: { gte: minDob } },
           { dateOfBirth: { lte: maxDob } },
           { gender: { in: selectedGender } },
+          ...(withPhoto === 'true' ? [{ image: { not: null } }] : []),
         ],
         NOT: {
           userId,
@@ -48,6 +60,7 @@ export async function getMembers({
           { dateOfBirth: { gte: minDob } },
           { dateOfBirth: { lte: maxDob } },
           { gender: { in: selectedGender } },
+          ...(withPhoto === 'true' ? [{ image: { not: null } }] : []),
         ],
         NOT: {
           userId,
